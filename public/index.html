@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Registration</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Student Registration</h1>
+
+    <form id="studentForm">
+      <label>Full Name</label>
+      <input type="text" id="name" required>
+
+      <label>Date of Birth</label>
+      <input type="date" id="date" required>
+
+      <label>Class</label>
+      <input type="text" id="class" required>
+
+      <label>Address</label>
+      <textarea id="address" required></textarea>
+
+      <label>Payment (UGX)</label>
+      <input type="number" id="payment" required>
+
+      <button type="submit">Submit</button>
+    </form>
+
+    <div id="message"></div>
+
+    <hr>
+
+    <h2>Registered Students</h2>
+    <button onclick="loadStudents()">Refresh List</button>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>DOB</th>
+          <th>Class</th>
+          <th>Address</th>
+          <th>Payment</th>
+        </tr>
+      </thead>
+      <tbody id="studentList"></tbody>
+    </table>
+  </div>
+
+  <script>
+    document.getElementById('studentForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('message');
+
+      const payload = {
+        name: document.getElementById('name').value,
+        date: document.getElementById('date').value,
+        class: document.getElementById('class').value,
+        address: document.getElementById('address').value,
+        payment: parseFloat(document.getElementById('payment').value),
+      };
+
+      try {
+        const res = await fetch('/api/students', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (data.success) {
+          msg.innerHTML = '<p class="success">Student saved successfully!</p>';
+          document.getElementById('studentForm').reset();
+          loadStudents();
+        } else {
+          msg.innerHTML = `<p class="error">Error: ${data.error}</p>`;
+        }
+      } catch (err) {
+        msg.innerHTML = `<p class="error">Network error: ${err.message}</p>`;
+      }
+    });
+
+    async function loadStudents() {
+      const res = await fetch('/api/students');
+      const data = await res.json();
+      const tbody = document.getElementById('studentList');
+      tbody.innerHTML = '';
+      data.data.forEach(s => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${s.name}</td>
+          <td>${new Date(s.date).toLocaleDateString()}</td>
+          <td>${s.class}</td>
+          <td>${s.address}</td>
+          <td>${s.payment.toLocaleString()}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    loadStudents();
+  </script>
+</body>
+</html>
